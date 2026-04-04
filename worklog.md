@@ -79,3 +79,46 @@ Stage Summary:
 - Lot size stays at 1 until ₹10,000 as per user requirement
 - Full platform operational: AI scoring, options chain, charts, P&L, telegram, logs
 - Dashboard accessible with dark+gold theme, responsive design
+
+---
+Task ID: 3
+Agent: Main Orchestrator
+Task: Auto-start engine + EXE packaging with Electron
+
+Work Log:
+- Updated EngineControls.tsx with AUTO-START logic:
+  - Engine automatically starts on page load (no manual click needed)
+  - Added startupPhase state: INITIALIZING → STARTING → RUNNING
+  - Added uptime counter showing HH:MM:SS since engine start
+  - Added "AUTO RUNNING" / "AUTO MODE" badge in header
+  - Engine status indicator with pulsing green dot
+  - Loading skeleton shows "Auto-starting engine..." while initializing
+  - Stop/Restart button still available for manual override
+  - Auto-start attempt tracked via useRef to prevent duplicate starts
+- Created Electron configuration for EXE packaging:
+  - electron/main.js — Main process wrapping Next.js server
+  - electron/preload.js — Secure context bridge
+  - Auto-detects if server already running (no duplicate starts)
+  - Menu bar hidden for clean desktop experience
+  - External links open in system browser
+  - Generates app icon using AI image generation (golden Om + chart + AI circuit)
+- Updated package.json with Electron config:
+  - Added electron + electron-builder as devDependencies
+  - Added scripts: electron:dev, electron:build, electron:build:win, build:exe, build:exe:portable
+  - electron-builder config: NSIS installer + Portable EXE
+  - App name: "JSS Wealthtech AI Trading"
+  - App ID: com.jsswealthtech.ai-trading
+  - Desktop shortcut + Start Menu shortcut created on install
+  - Configured standalone Next.js output bundling
+- Added electron/ to ESLint ignores (CommonJS modules)
+- Zero lint errors confirmed
+- Dev server running successfully on port 3000
+
+Stage Summary:
+- AUTO-START: Engine starts automatically when page loads — zero clicks needed
+- EXE PACKAGING: Full Electron + electron-builder configuration ready
+- Build commands:
+  - `bun run build:exe` → Creates NSIS Setup installer (.exe)
+  - `bun run build:exe:portable` → Creates portable EXE (no install needed)
+- Icon generated: electron/icon.png (golden Om + chart + AI circuit design)
+- Auto-start flow: Page load → Check engine status → Auto-start if not running → Show uptime
