@@ -32,10 +32,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
-
 
 # typescript
 *.tsbuildinfo
@@ -50,5 +50,30 @@ test
 prompt
 
 server.log
+
 # Skills directory
 /skills/
+
+# Database files
+/db/*.db
+/db/*.db-journal
+
+# Upload & Download dirs
+/upload/
+/download/
+
+# Generated repo analysis files
+repo-main.json
+repo-tree.json
+
+# Worklog (internal)
+worklog.md
+worklog_test.md
+
+# Electron build output
+/dist/
+/release/
+
+# Z.ai internal
+.zscripts/
+Caddyfile
