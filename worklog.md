@@ -122,3 +122,41 @@ Stage Summary:
   - `bun run build:exe:portable` → Creates portable EXE (no install needed)
 - Icon generated: electron/icon.png (golden Om + chart + AI circuit design)
 - Auto-start flow: Page load → Check engine status → Auto-start if not running → Show uptime
+
+---
+Task ID: 4
+Agent: Main Orchestrator
+Task: FULL AUDIT + LITE Theme Conversion
+
+Work Log:
+- Complete audit of ALL 14+ source files against every requirement from chat history
+- Verified 22/22 features present and functional — zero features removed, zero features missing
+- Converted ENTIRE dashboard from DARK theme to LITE (light) theme across 14 files:
+  - layout.tsx: Removed `dark` class from html element
+  - globals.css: Scrollbar colors → light (#f9fafb track, #d1d5db thumb)
+  - page.tsx: Main bg gray-50, header/footer white, all badges/borders/text converted
+  - EngineControls.tsx: White cards, gray-50 inner containers, all mode/window/market badges
+  - CapitalPanel.tsx: Protection levels, P&L colors, stat grids, progress bars
+  - CurrentTrade.tsx: Direction badges, price details, confidence bar, close button
+  - LiveRates.tsx: Table styling, status badges, hover states
+  - AIAnalysis.tsx: Tier/regime/protection badges, metric cards, advisory, patterns, pressure bars
+  - OptionsChain.tsx: CE/PE rows, ATM highlights, Select dropdowns, sticky header
+  - CandlestickChart.tsx: CartesianGrid/XAxis/YAxis strokes, tooltip bg, EMA lines, interval buttons
+  - PnlChart.tsx: Both chart tooltips, stat cards, day filters, ReferenceLines
+  - TradeHistory.tsx: Row backgrounds, expanded details, status badges
+  - TelegramPanel.tsx: Connected/disconnected badges, input, message cards, group badges
+  - SystemLog.tsx: Level colors, badge colors, log container, clear button
+- Comprehensive color mapping applied: 60+ unique dark-to-light conversions
+- Deep verification: rg search confirms ZERO remaining dark theme colors in custom code
+- Zero lint errors confirmed
+- Dev server running, all APIs responding 200
+
+Stage Summary:
+- FULL AUDIT: 22/22 features verified — nothing removed, nothing forgotten
+- LITE THEME: Complete conversion across all 14 files
+- Color mapping: bg-[#0f0f13]→gray-50, bg-[#1a1a24]→white, bg-[#2a2a3a]→gray-200, border→gray-200
+- Text mapping: text-white→gray-900, gray-400→gray-500, green/red/amber-400→-600
+- Badge mapping: All alpha-based badge patterns → -50 bg / -700 text / -200 border
+- Chart mapping: Grid strokes → #e5e7eb, tooltips → white shadow-lg
+- Zero dark color references remaining in custom source code
+- Build: bun run lint ✅ | Dev server: ✅ | All APIs: ✅
