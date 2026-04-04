@@ -229,3 +229,63 @@ Build all frontend components for the trading dashboard: 9 dashboard components,
 - Dev server compiles successfully (200 responses on API routes)
 - All 9 components + index + page created and functional
 - Dark theme properly applied with custom scrollbar styling
+
+---
+## Task ID: 5 - Fixed Capital ₹1000 Implementation
+### Work Task
+Per user requirement: Capital must ALWAYS stay at ₹1000 fixed. Profit/loss tracked SEPARATELY so the user can clearly see how much they made/lost from the original ₹1000.
+
+### Changes Made
+
+1. **`src/lib/capital-manager.ts`** - Complete rewrite
+   - `current` field ALWAYS remains ₹1000 (never changes)
+   - `totalPnl` tracks cumulative profit/loss (positive = profit, negative = loss)
+   - New `effectiveCapital` = 1000 + totalPnl (what you'd actually have)
+   - `peak` tracks highest effectiveCapital ever reached
+   - `addProfit()` only increases totalPnl, does NOT change current
+   - `addLoss()` only decreases totalPnl, does NOT change current
+   - New `getEffectiveCapital()` method for risk checks
+   - New `getEffectiveCapitalForRisk()` method used by trading engine
+   - New `resetAll()` method for fresh starts
+   - On DB load, `current` is always reset to 1000 regardless of stored value
+
+2. **`src/lib/types.ts`** - Updated CapitalState interface
+   - Added `effectiveCapital: number` field
+   - Added documentation comments explaining each field
+
+3. **`src/lib/store.ts`** - Updated default capital state
+   - Added `effectiveCapital: 1000` to defaults
+
+4. **`src/lib/trading-engine.ts`** - Updated 3 methods
+   - `findAndExecuteTrade()` - uses `getEffectiveCapitalForRisk()` instead of `getCurrentCapital()`
+   - `forceExecuteTrade()` - same change
+   - `closeCurrentTrade()` - saves `getEffectiveCapital()` instead of `getCurrentCapital()`
+   - Trade records now store effective capital
+
+5. **`src/app/api/capital/route.ts`** - Updated response
+   - Returns `effectiveCapital` field in default response
+
+6. **`src/components/dashboard/CapitalPanel.tsx`** - Complete UI redesign
+   - **Fixed Capital Box** (amber border): Shows ₹1,000 with label "Start Capital (Fixed)"
+   - **Total P&L** (main metric): Large green/red display with return percentage
+   - **Effective Capital** box: Shows 1000 + P&L with explanation in Hindi
+   - **Daily P&L**: Shows today's profit/loss
+   - Same stats grid: Wins/Losses, Peak Value, Drawdown, Total Trades
+   - Win rate progress bar
+   - Warning when effective capital drops below ₹500
+
+7. **`src/app/page.tsx`** - Updated header and footer
+   - Header badge: "₹1,000 FIXED CAPITAL" (was "₹1,000 CAPITAL")
+   - Footer: "Capital: ₹1,000 (Fixed)" (added "Fixed")
+
+### Design Philosophy
+- Capital = ₹1,000 is a FIXED REFERENCE POINT, never changes
+- P&L is tracked separately so user can clearly see performance
+- Effective Capital (1000 + P&L) shows what you'd actually have
+- This makes it crystal clear: "Started with 1000, made X profit, now have Y"
+
+### Verification
+- Capital API returns: `{"initial":1000,"current":1000,"effectiveCapital":1000,"peak":1000,"totalPnl":0,...}`
+- Zero ESLint errors
+- Dev server compiles successfully
+- Page renders correctly with all components
