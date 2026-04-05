@@ -1,0 +1,57 @@
+# === JSS Sawriya Seth Wealthtech AI Trading ===
+# Copy this file as config.json and fill your values!
+
+{
+    "broker": {
+        "name": "kotak_neo",
+        "client_code": "XV3ZT",
+        "access_token": "YOUR_ACCESS_TOKEN_HERE",
+        "mobile": "+91XXXXXXXXXX",
+        "mpin": "YOUR_MPIN_HERE",
+        "totp_secret": "YOUR_TOTP_SECRET_HERE"
+    },
+    "trading": {
+        "initial_capital": 1000,
+        "lot_size": 1,
+        "scale_capital_threshold": 10000,
+        "max_loss_percent": 5,
+        "max_daily_loss_percent": 10,
+        "default_sl_percent": 2,
+        "trailing_sl_activation": 1,
+        "trailing_sl_percent": 0.5,
+        "cooldown_minutes": 5,
+        "max_open_trades": 1,
+        "square_off_time": "15:15",
+        "symbols": ["NIFTY", "BANKNIFTY"],
+        "default_strategy": "momentum_follow",
+        "ai_scoring": true
+    },
+    "telegram": {
+        "enabled": false,
+        "bot_token": "YOUR_BOT_TOKEN_HERE",
+        "alert_chat_id": "YOUR_CHAT_ID_HERE",
+        "reader_enabled": false,
+        "api_id": "YOUR_API_ID_HERE",
+        "api_hash": "YOUR_API_HASH_HERE",
+        "phone": "+91XXXXXXXXXX",
+        "groups_to_watch": [],
+        "auto_trade_signals": false
+    },
+    "ai": {
+        "enabled": false,
+        "api_key": "YOUR_OPENAI_API_KEY_HERE",
+        "model": "gpt-4o",
+        "min_confidence": 65
+    },
+    "reports": {
+        "auto_generate": true,
+        "export_dir": "reports",
+        "format": "excel"
+    },
+    "logging": {
+        "level": "INFO",
+        "file": "logs/engine.log",
+        "max_size_mb": 10,
+        "backup_count": 5
+    }
+}
