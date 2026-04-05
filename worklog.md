@@ -386,3 +386,66 @@ Created 7 files that form the final integration layer of the Python trading syst
 - Building EXE: instructions for standalone executable
 - Technologies: list of all dependencies
 - Disclaimer: paper trading warning
+
+---
+## Task ID: 2+3+8+9 - bugfix-post-rename
+### Work Task
+Fix 4 files after the `telegram/` folder was renamed to `tg_integration/`: config.json structure mismatch, unused packages in requirements.txt, broken imports in engine.py, trade value calculation bug, trailing SL initialization bug, _log_to_db called after DB close, and GUI start/stop buttons not wired to engine.
+
+### Work Summary
+
+#### FIX 1: `/home/z/my-project/config/config.json` — Full rewrite
+- Old config had wrong top-level keys (`trading`, `reports`, `logging`) that `engine.py._default_config()` and `_init_components()` never read
+- Rewrote to match `_default_config()` exactly: `broker`, `database`, `capital`, `risk`, `strategies`, `symbols`, `scan_interval_seconds`, `candle_interval`, `candle_limit`, `square_off_time`, `telegram`, `ai`, `daily_report`
+- Added all 11 `groups_to_watch` entries with real Telegram group IDs
+- Removed phantom keys: `broker.name`, `broker.trading.*`, `trading.*`, `reports.*`, `logging.*`, `telegram.alert_chat_id`, `telegram.auto_trade_signals`
+
+#### FIX 2: `/home/z/my-project/requirements.txt` — Removed 3 unused packages
+- Removed `pandas>=2.2.0` (never imported in codebase)
+- Removed `ta>=0.11.0` (never imported; custom indicators in `core/indicators.py`)
+- Removed `tkcalendar>=1.6.1` (never imported; Tkinter built-in used instead)
+- Kept: `pyotp`, `requests`, `numpy`, `openpyxl`, `python-telegram-bot`, `Telethon`, `Pillow`
+
+#### FIX 3: `/home/z/my-project/core/engine.py` — 6 targeted edits
+1. **Line 256**: `from telegram.bot import TelegramAlertBot` → `from tg_integration.bot import TelegramAlertBot`
+2. **Line 269-270**: `from telegram.reader import TelegramReader` / `from telegram.parser import SignalParser` → `from tg_integration.reader import TelegramReader` / `from tg_integration.parser import SignalParser`
+3. **Line 665-669**: Trade value calculation was passing `strike` (e.g., 24500) instead of `entry_price` (e.g., 185). This caused `can_trade()` to always reject trades because the computed trade value exceeded capital. Fixed: `premium = entry_price if entry_price > 0 else strike` then pass `premium`.
+4. **Line 690**: Added `initial_trailing_sl = sl` after SL/target calculation. Changed `"trailing_sl": 0.0` to `"trailing_sl": round(initial_trailing_sl, 2)` so trailing SL starts at the regular SL price and can be monitored from trade open.
+5. **Line 407-423**: Moved `self._log_to_db("INFO", "Engine stopped", "ENGINE")` BEFORE `self.db.close()`. Previously it was called after DB was closed, causing the "Engine stopped" log entry to silently fail.
+
+#### FIX 4: `/home/z/my-project/omai_main.py` — Wired GUI buttons to engine
+- **Line 345**: Changed `gui = TradingGUI(root, engine_callback=None)` to pass a proper `engine_callback` function
+- Created `engine_callback(action, **kwargs)` closure that maps `"start"` → `engine.start()` and `"stop"` → `engine.stop()`
+- Includes error handling with logging for callback failures
+- No `telegram` module imports found in omai_main.py (already clean)
+- The GUI's `_start_engine()` / `_stop_engine()` methods call `self.engine_callback("start"/"stop")` which now correctly invokes the engine lifecycle methods
+## Task ID: 4+5+6+7 - bugfix-round1
+### Work Task
+Fix 5 categories of bugs across 4 Python files: P&L double-counting, code style/hardcoded values, wrong NSE lot sizes, trade key mismatches, and GUI lifecycle issues.
+
+### Work Summary
+
+#### FIX 1: core/capital.py — P&L Double-Counting Bug
+- **Bug**: `record_trade_close()` had `pnl = (exit_price - entry_price) * qty * lot_multiplier` and `trade_value = entry_price * qty * lot_multiplier`. Since `qty` from engine.py is already `lots × lot_multiplier`, this double-counted the multiplier.
+- **Fix**: Removed `* lot_multiplier` from both lines (326, 330). Updated docstring to reflect the correct formula and added a note that `qty` already includes the multiplier.
+
+#### FIX 2: core/risk.py — Code Style and Hardcoded Value
+- **Bug 1** (line ~401): `__import__("datetime").timedelta(minutes=minutes)` — bad style, unnecessary dynamic import.
+- **Fix 1**: Added `timedelta` to the existing `from datetime import datetime, time` import, then changed to `datetime.now() + timedelta(minutes=minutes)`.
+- **Bug 2** (line ~528): `if current <= 100:` hardcoded the hard-floor value.
+- **Fix 2**: Added `from core.capital import HARD_FLOOR` import, changed to `if current <= HARD_FLOOR:`.
+
+#### FIX 3: brokers/kotak_neo.py — Incorrect NSE Lot Sizes
+- **Bug**: `_INSTRUMENT_MAP` had NIFTY lot_size="25" (should be 50) and BANKNIFTY lot_size="15" (should be 25).
+- **Fix**: Changed NIFTY lot_size from "25" to "50", BANKNIFTY lot_size from "15" to "25". FINNIFTY was already correct at "25".
+
+#### FIX 4: core/option_chain.py — Lot Multiplier Verification
+- **Result**: `_LOT_MULTIPLIER` dict already has correct values: NIFTY=50, BANKNIFTY=25, FINNIFTY=50. No changes needed.
+
+#### FIX 5: ui/desktop.py — Three Bugs Fixed
+- **Bug 1** (key mismatch): `update_trade_panel()` used `trade.get("entry", 0)` but engine provides `"entry_price"`.
+- **Fix 1**: Changed to `trade.get("entry_price", 0)`. All other keys (status, symbol, direction, ltp, sl, target, trailing_sl, pnl) were already correct.
+- **Bug 2** (engine disconnected): `_start_engine()` and `_stop_engine()` only called `engine_callback` but had no direct `engine` reference.
+- **Fix 2**: Added `engine` parameter to `__init__()`, stored as `self.engine`. Added `if self.engine: self.engine.start()/stop()` calls before the existing callback logic in both methods.
+- **Bug 3** (`_update_clock` never stops): The 1-second `after()` loop continued even after window destruction, causing TclError.
+- **Fix 3**: Added `if not self.root.winfo_exists(): return` guard at the top of `_update_clock()`.

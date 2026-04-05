@@ -14,8 +14,10 @@ from __future__ import annotations
 import logging
 import math
 import threading
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from typing import Any, Optional
+
+from core.capital import HARD_FLOOR
 
 logger = logging.getLogger(__name__)
 
@@ -398,7 +400,7 @@ class RiskManager:
             minutes = self._config["strategy_cooldown_minutes"]
 
         with self._lock:
-            cooldown_until = datetime.now() + __import__("datetime").timedelta(minutes=minutes)
+            cooldown_until = datetime.now() + timedelta(minutes=minutes)
             self._cooldowns[strategy_name] = cooldown_until
 
         logger.info(
@@ -525,7 +527,7 @@ class RiskManager:
 
             # 4. Capital floor check
             current = float(state.get("current", 0))
-            if current <= 100:
+            if current <= HARD_FLOOR:
                 return {
                     "allowed": False,
                     "reason": f"Capital at floor (₹{current:.2f}); trading halted",

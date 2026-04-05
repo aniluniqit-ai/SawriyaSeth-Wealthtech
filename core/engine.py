@@ -253,7 +253,7 @@ class TradingEngine:
             tg_cfg = self._config.get("telegram", {})
             if tg_cfg.get("enabled", False):
                 try:
-                    from telegram.bot import TelegramAlertBot
+                    from tg_integration.bot import TelegramAlertBot
 
                     self.telegram_bot = TelegramAlertBot(
                         token=tg_cfg.get("bot_token", ""),
@@ -266,8 +266,8 @@ class TradingEngine:
             # 8. Telegram Reader
             if tg_cfg.get("reader_enabled", False):
                 try:
-                    from telegram.reader import TelegramReader
-                    from telegram.parser import SignalParser
+                    from tg_integration.reader import TelegramReader
+                    from tg_integration.parser import SignalParser
 
                     self.telegram_reader = TelegramReader(
                         api_id=tg_cfg.get("api_id", 0),
@@ -404,6 +404,10 @@ class TradingEngine:
         except Exception as exc:
             logger.error("Daily report generation on shutdown failed: %s", exc)
 
+        # Log stop BEFORE closing DB (can't write to closed DB)
+        self._log_to_db("INFO", "Engine stopped", "ENGINE")
+        logger.info("Engine stopped")
+
         # Close DB
         if self.db:
             try:
@@ -417,9 +421,6 @@ class TradingEngine:
                 self.broker.close()
             except Exception as exc:
                 logger.error("Broker close failed: %s", exc)
-
-        self._log_to_db("INFO", "Engine stopped", "ENGINE")
-        logger.info("Engine stopped")
 
     # ------------------------------------------------------------------
     # Main Loop
@@ -662,9 +663,10 @@ class TradingEngine:
             lot_multiplier = self._get_lot_multiplier(symbol)
             qty = lot_size * lot_multiplier
 
-            # Trade value
+            # Trade value — use premium (entry_price) not strike for accurate costing
+            premium = entry_price if entry_price > 0 else strike
             trade_value = self.capital_manager.calculate_trade_value(
-                strike, lot_size, lot_multiplier
+                premium, lot_size, lot_multiplier
             )
 
             # Capital check
@@ -684,6 +686,9 @@ class TradingEngine:
                 target = self.risk_manager.calculate_target(
                     entry_price, direction
                 )
+
+            # Initialize trailing SL to regular SL (will be updated by monitor_trades)
+            initial_trailing_sl = sl
 
             # Generate unique trade ID
             trade_id = f"T{uuid.uuid4().hex[:10].upper()}"
@@ -718,7 +723,7 @@ class TradingEngine:
                 "lot_size": lot_size,
                 "sl": round(sl, 2),
                 "target": round(target, 2),
-                "trailing_sl": 0.0,
+                "trailing_sl": round(initial_trailing_sl, 2),
                 "pnl": 0.0,
                 "status": "OPEN",
                 "strategy": strategy_name,

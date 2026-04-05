@@ -296,9 +296,12 @@ class CapitalManager:
     ) -> dict[str, Any]:
         """Calculate P&L and update capital when a trade is closed.
 
-        P&L formula (per-lot, per-point):
-        - BUY  → ``pnl = (exit_price - entry_price) × qty × lot_multiplier``
-        - SELL → ``pnl = (entry_price - exit_price) × qty × lot_multiplier``
+        P&L formula:
+        - BUY  → ``pnl = (exit_price - entry_price) × qty``
+        - SELL → ``pnl = (entry_price - exit_price) × qty``
+
+        Note: ``qty`` is already ``lots × lot_multiplier``, so lot_multiplier
+        must NOT be applied again here.
 
         The returned capital is clamped so it never falls below
         ``HARD_FLOOR`` (₹100).
@@ -320,11 +323,11 @@ class CapitalManager:
         # Calculate P&L
         # For options, qty is typically lots * lot_multiplier is already
         # accounted for in the trade_value. Here we compute raw P&L.
-        pnl = (exit_price - entry_price) * qty * lot_multiplier
+        pnl = (exit_price - entry_price) * qty
         pnl = round(pnl, 2)
 
         # Restore reserved capital + P&L
-        trade_value = entry_price * qty * lot_multiplier
+        trade_value = entry_price * qty
         new_capital = current + trade_value + pnl
 
         # Enforce hard floor

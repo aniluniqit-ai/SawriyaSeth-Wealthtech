@@ -342,7 +342,19 @@ def main() -> None:
     try:
         from ui.desktop import TradingGUI
 
-        gui = TradingGUI(root, engine_callback=None)
+        def engine_callback(action, **kwargs):
+            """Bridge GUI button actions to engine start/stop methods."""
+            if engine is None:
+                return
+            try:
+                if action == "start":
+                    engine.start()
+                elif action == "stop":
+                    engine.stop()
+            except Exception as exc:
+                logging.error("Engine callback '%s' failed: %s", action, exc)
+
+        gui = TradingGUI(root, engine_callback=engine_callback)
         logging.info("TradingGUI created")
     except Exception as exc:
         logging.error("Failed to create TradingGUI: %s", exc, exc_info=True)

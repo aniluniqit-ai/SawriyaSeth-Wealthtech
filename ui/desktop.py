@@ -66,8 +66,9 @@ class TradingGUI:
     # ------------------------------------------------------------------
     # Initialisation
     # ------------------------------------------------------------------
-    def __init__(self, root: tk.Tk, engine_callback=None):
+    def __init__(self, root: tk.Tk, engine=None, engine_callback=None):
         self.root = root
+        self.engine = engine
         self.engine_callback = engine_callback  # callable: engine_callback(action, **kwargs)
         self.engine_running = False
         self.broker_connected = False
@@ -904,6 +905,12 @@ class TradingGUI:
         self.lbl_engine_status.configure(text="Engine Status: ● Running", fg=GREEN)
         self.append_log("SYSTEM", "Engine started successfully")
 
+        if self.engine:
+            try:
+                self.engine.start()
+            except Exception as e:
+                self.append_log("ERROR", f"Engine start failed: {e}")
+
         if self.engine_callback:
             try:
                 self.engine_callback("start")
@@ -921,6 +928,12 @@ class TradingGUI:
         self.lbl_engine_status.configure(text="Engine Status: ● Stopped", fg=RED)
         self.append_log("SYSTEM", "Engine stopped by user")
 
+        if self.engine:
+            try:
+                self.engine.stop()
+            except Exception as e:
+                self.append_log("ERROR", f"Engine stop failed: {e}")
+
         if self.engine_callback:
             try:
                 self.engine_callback("stop")
@@ -932,6 +945,8 @@ class TradingGUI:
     # ------------------------------------------------------------------
     def _update_clock(self):
         """Update the clock in the status bar every second."""
+        if not self.root.winfo_exists():
+            return
         now = datetime.now().strftime("%H:%M:%S")
         current_text = self.status_right.cget("text")
         # Replace the time part (after "Time: ")
@@ -1049,7 +1064,7 @@ class TradingGUI:
         status = trade.get("status", "NONE")
         symbol = trade.get("symbol", "—")
         direction = trade.get("direction", "—")
-        entry = trade.get("entry", 0)
+        entry = trade.get("entry_price", 0)
         ltp = trade.get("ltp", 0)
         sl = trade.get("sl", 0)
         target = trade.get("target", 0)

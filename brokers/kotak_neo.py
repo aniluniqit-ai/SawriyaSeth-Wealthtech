@@ -56,14 +56,14 @@ _INSTRUMENT_MAP: dict[str, dict[str, str]] = {
         "exchange_token": "26",
         "trading_symbol": "NIFTY 50",
         "instrument_type": "INDEX",
-        "lot_size": "25",
+        "lot_size": "50",
     },
     "BANKNIFTY": {
         "exchange": "NSE",
         "exchange_token": "25",
         "trading_symbol": "BANK NIFTY",
         "instrument_type": "INDEX",
-        "lot_size": "15",
+        "lot_size": "25",
     },
     "FINNIFTY": {
         "exchange": "NSE",
