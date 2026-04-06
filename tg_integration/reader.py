@@ -135,24 +135,28 @@ class TelegramReader:
             if not client.is_user_authorized():
                 has_session = self._load_session()
                 if not has_session:
-                    logger.info(
-                        "⚠️  No session found. Sending OTP to %s ...", self._phone
+                    logger.warning(
+                        "⚠️  No session found. Please run OTP setup manually first."
                     )
-                    logger.info(
-                        "👉 Check your Telegram app for the OTP code and enter it in the console."
+                    logger.warning(
+                        "💡 Run this script standalone (not as daemon) to complete OTP setup."
                     )
-
-                client.send_code_request(self._phone)
-                try:
-                    code = input("Enter the OTP code you received: ").strip()
-                    client.sign_in(self._phone, code)
-                except SessionPasswordNeededError:
-                    password = input("Two-factor password required: ").strip()
-                    client.sign_in(password=password)
-
-                # First successful auth — save session marker
-                self._save_session()
-                logger.info("✅ Successfully authenticated with Telegram")
+                    # Try interactive login (works when run manually, not in daemon)
+                    import sys
+                    if not sys.stdin.isatty() or not sys.stdout.isatty():
+                        logger.error("Cannot prompt for OTP in non-interactive mode. Skipping.")
+                        self._running = False
+                        return
+                    logger.info("👉 Check your Telegram app for the OTP code.")
+                    client.send_code_request(self._phone)
+                    try:
+                        code = input("Enter the OTP code you received: ").strip()
+                        client.sign_in(self._phone, code)
+                    except SessionPasswordNeededError:
+                        password = input("Two-factor password required: ").strip()
+                        client.sign_in(password=password)
+                    self._save_session()
+                    logger.info("✅ Successfully authenticated with Telegram")
             else:
                 logger.info("✅ Reusing existing Telegram session")
 

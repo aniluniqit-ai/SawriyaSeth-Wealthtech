@@ -192,7 +192,6 @@ def check_dependencies() -> bool:
         ("telegram", "Telegram bot (python-telegram-bot)"),
         ("telethon", "Telegram group reader"),
         ("numpy", "Fast numerical calculations"),
-        ("pandas", "Data manipulation"),
     ]
 
     missing_critical = []
@@ -207,7 +206,7 @@ def check_dependencies() -> bool:
     for pkg, desc in optional:
         try:
             __import__(pkg)
-        except ImportError:
+        except Exception:
             missing_optional.append(f"{pkg} ({desc})")
 
     if missing_critical:

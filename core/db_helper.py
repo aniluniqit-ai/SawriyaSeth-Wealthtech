@@ -643,9 +643,9 @@ class Database:
 
                 new_peak = max(state["peak"], current)
                 new_total_pnl = state["total_pnl"] + pnl
-                new_wins = state["wins"] + (1 if pnl > 0 else 0)
-                new_losses = state["losses"] + (1 if pnl < 0 else 0)
-                new_total = state["total_trades"] + 1
+                new_wins = state["wins"]
+                new_losses = state["losses"]
+                new_total = state["total_trades"]
 
                 self._conn.execute(
                     """

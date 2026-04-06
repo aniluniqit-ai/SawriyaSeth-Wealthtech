@@ -594,8 +594,21 @@ class KotakNeoBroker:
         # Simulated fill price – for MARKET orders, fetch a realistic LTP
         filled_price = price
         if order_type.upper() == "MARKET":
-            # Use a small random offset from any given price, or generate one
-            filled_price = max(price, random.uniform(50, 500))
+            # For paper trading, use a small offset from the given price
+            # If no price given, estimate based on typical option premiums
+            if price <= 0:
+                # Generate a realistic near-ATM premium estimate
+                symbol_for_price = symbol.upper() if isinstance(symbol, str) else "NIFTY"
+                if symbol_for_price == "BANKNIFTY":
+                    filled_price = round(random.uniform(80, 350), 2)
+                elif symbol_for_price == "FINNIFTY":
+                    filled_price = round(random.uniform(50, 250), 2)
+                else:
+                    filled_price = round(random.uniform(100, 300), 2)
+            else:
+                # Add small realistic slippage (±2%)
+                slippage = price * random.uniform(-0.02, 0.02)
+                filled_price = round(price + slippage, 2)
 
         order: dict[str, Any] = {
             "order_id": order_id,
